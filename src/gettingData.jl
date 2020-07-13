@@ -19,9 +19,9 @@ end
 
 
 
-function fotoReshape(file::String)
+function fotoReshape(file::String; dims = (32, 32))
 
-    im = imresize(load(file), 32, 32);
+    im = imresize(load(file), dims...);
     Float32.(im)
 
 end
@@ -116,7 +116,7 @@ end
 
 
 
-function prepareImages(folders)
+function prepareImages(folders, fileLocation)
 
     add_xs = []
     add_ys = []
@@ -154,21 +154,23 @@ function prepareImages(folders)
     x = x[perm]
     y = y[perm]
 
-    fileLocation = "/Users/svenduve/.julia/dev/VetFun/data/"
-    save(fileLocation * "roentgen.jld", "x", x, "y", y)
+    #fileLocation = "data/"
+    save(joinpath(fileLocation, fileName), "x", x, "y", y)
+    #save(path_fileName, "x", x, "y", y)
 
     return x, y
 
 end
 
 
+data_path() = abspath(joinpath(@__DIR__, "..", "data"))
+
+#, "roentgen.jld"))
 
 
+function getData(fileLocation, fileName)
 
-function getData()
-
-    fileLocation = "data/"
-    return load(fileLocation * "roentgen.jld")
+    return load(joinpath(fileLocation, fileName))
 
 end
 
