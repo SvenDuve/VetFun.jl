@@ -192,7 +192,7 @@ function processX(x)
 end
 
 
-function train_3Cat_NN(xs, ys, lr, batchsize, path)
+function train_3Cat_NN(xs, ys, lr, batchsize, epochs)
 
     data = DataLoader(xs, ys, batchsize=batchsize)
     model = Chain(Dense(size(data.data[1])[1], 32, relu), Dense(32, 3, σ), softmax)
@@ -200,7 +200,7 @@ function train_3Cat_NN(xs, ys, lr, batchsize, path)
     opt = Descent(lr)
 
 
-    for i in 1:5
+    for i in 1:epochs
 
         Flux.train!(loss, params(model), data, opt)
         println("Iteration: ", i, " loss ", loss(data.data[1], data.data[2]))
@@ -208,15 +208,12 @@ function train_3Cat_NN(xs, ys, lr, batchsize, path)
         
     end
 
-
-    weights = params(model)
-
-    @save path model
+    return model
 
 end
 
 
-function model_3Cat()
+function model_3Cat(Args)
 
     data = getData(data_path(), "roentgen.jld")
     #data = getData("/Users/svenduve/.julia/dev/VetFun/data/", "roentgen.jld")
@@ -237,21 +234,61 @@ function model_3Cat()
     xs, ys = x_data[:, perm[1:Int(round(size(x_data)[2] * 0.9))]], y_data[:, perm[1:Int(round(size(x_data)[2] * 0.9))]]
     x_test, y_test = x_data[: , perm[Int(round(size(x_data)[2] * 0.9)) + 1:end]], y_data[: , perm[Int(round(size(x_data)[2] * 0.9)) + 1:end]]
 
-    train_3Cat_NN(xs, ys, 0.001, 1, joinpath(data_path(), "/NNRoentgen3Way.bson"))
+    model = train_3Cat_NN(xs, ys, Args.lr, Args.batchsize, Args.epochs)
     
 
     # @load "NNRoentgen3Way.bson" model
     # @load "NNRoentgen3Way.bson" weights
-    @load joinpath(data_path(), "/NNRoentgen3Way.bson") model
+    # @load joinpath(data_path(), "NNRoentgen3Way.bson") model
 
 
 
     gt = classify(y_test) 
     pred = classify(model(x_test)) 
     println("There Correctrate is: ", correctrate(gt, pred))
+    println("The Confustion Matrix: ")
+    @show confusmat(length(levels), gt , pred) # not sure about this, we have two classes, but doesnt like it
+    println("Model: ")
+    return model
 
-    confusmat(3, gt , pred) # not sure about this, we have two classes, but doesnt like it
+
+end
+
+
+function saveModel(model, modelName)
 
     
+    @save joinpath(data_path(), modelName) model
+
+end
+
+
+function loadModel(modelName)
+
+    @load joinpath(data_path(), modelName) model
+    return model
+
+end
+
+
+
+function makePrediction(img, modelName)
+
+    try
+        categ = ["None", "Bacterial", "Viral"]
+        x = fotoReshape(img)
+        x = reshape(x, 1, :)
+        x = transpose(x)
+        model = loadModel(modelName)
+        pred = Int.(round.(model(x)))
+        println("The infection type is: " * categ[findall(x -> x == 1, pred)][1])
+
+    catch
+
+        error("The loaded picture seems to be in the wrong format!")
+
+    end
+
+
 
 end

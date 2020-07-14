@@ -41,7 +41,11 @@ export extractFileList,
         data_path,
         processX,
         train_3Cat_NN,
-        model_3Cat
+        model_3Cat,
+        saveModel,
+        loadModel,
+        makePrediction,
+        Args
 
 
 
@@ -51,6 +55,10 @@ export extractFileList,
 # Flux.loadparams!(model, weights)
 
 include("gettingData.jl")
-
+struct Args
+        lr
+        batchsize
+        epochs
+end
 
 end
