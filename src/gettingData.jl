@@ -116,7 +116,7 @@ end
 
 
 
-function prepareImages(folders, fileLocation)
+function prepareImages(folders, fileName)
 
     add_xs = []
     add_ys = []
@@ -155,7 +155,7 @@ function prepareImages(folders, fileLocation)
     y = y[perm]
 
     #fileLocation = "data/"
-    save(joinpath(fileLocation, fileName), "x", x, "y", y)
+    save(joinpath(data_path(), fileName), "x", x, "y", y)
     #save(path_fileName, "x", x, "y", y)
 
     return x, y
@@ -174,3 +174,84 @@ function getData(fileLocation, fileName)
 
 end
 
+
+
+function processX(x)
+
+    for i in 1:length(x)
+
+        x[i] = reshape(x[i], 1, :)
+
+    end
+
+
+    x = vcat(x...)
+    transpose(x)
+
+
+end
+
+
+function train_3Cat_NN(xs, ys, lr, batchsize, path)
+
+    data = DataLoader(xs, ys, batchsize=batchsize)
+    model = Chain(Dense(size(data.data[1])[1], 32, relu), Dense(32, 3, σ), softmax)
+    loss(x, y) = Flux.crossentropy(model(x), y)
+    opt = Descent(lr)
+
+
+    for i in 1:5
+
+        Flux.train!(loss, params(model), data, opt)
+        println("Iteration: ", i, " loss ", loss(data.data[1], data.data[2]))
+        
+        
+    end
+
+
+    weights = params(model)
+
+    @save path model
+
+end
+
+
+function model_3Cat()
+
+    data = getData(data_path(), "roentgen.jld")
+    #data = getData("/Users/svenduve/.julia/dev/VetFun/data/", "roentgen.jld")
+
+    x_data = data["x"]
+    y_data = data["y"]
+
+    ratios, levels = returnClassImbalance(y_data)
+
+    println("We have classes ", levels)
+    println("We have ratios ", ratios)
+
+    y_data = Flux.onehotbatch(vec(y_data), levels)
+    x_data = processX(x_data)
+
+    perm = shuffle(1:size(x_data)[2])
+
+    xs, ys = x_data[:, perm[1:Int(round(size(x_data)[2] * 0.9))]], y_data[:, perm[1:Int(round(size(x_data)[2] * 0.9))]]
+    x_test, y_test = x_data[: , perm[Int(round(size(x_data)[2] * 0.9)) + 1:end]], y_data[: , perm[Int(round(size(x_data)[2] * 0.9)) + 1:end]]
+
+    train_3Cat_NN(xs, ys, 0.001, 1, joinpath(data_path(), "/NNRoentgen3Way.bson"))
+    
+
+    # @load "NNRoentgen3Way.bson" model
+    # @load "NNRoentgen3Way.bson" weights
+    @load joinpath(data_path(), "/NNRoentgen3Way.bson") model
+
+
+
+    gt = classify(y_test) 
+    pred = classify(model(x_test)) 
+    println("There Correctrate is: ", correctrate(gt, pred))
+
+    confusmat(3, gt , pred) # not sure about this, we have two classes, but doesnt like it
+
+    
+
+end

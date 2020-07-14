@@ -1,16 +1,45 @@
-# using Flux
-# using Flux.Data: DataLoader
-# using Flux: crossentropy, gradient, params, logitcrossentropy, normalise, binarycrossentropy, onehot
-# using Flux.Optimise: update!, Descent
-# using MLBase
-# using Images
-# using ImageMagick
-# using FileIO
-# using Distributions
-# using Random
-# using HDF5
-# using JLD
-# using Plots
+
+function model_3Cat()
+
+    data = getData(data_path, "roentgen.jld")
+
+    x_data = data["x"]
+    y_data = data["y"]
+
+    ratios, levels, returnClassImbalance(y_data)
+
+    println("We have classes ", levels)
+    println("We have ratios ", ratios)
+
+    y_data = Flux.onehotbatch(vec(y_data), levels)
+
+    x_data = processX(x_data)
+
+
+    xs, ys = x_data[:, perm[1:Int(round(size(x_data)[2] * 0.9))]], y_data[:, perm[1:Int(round(size(x_data)[2] * 0.9))]]
+    x_test, y_test = x_data[: , perm[Int(round(size(x_data)[2] * 0.9)) + 1:end]], Y_Data[: , perm[Int(round(size(x_data)[2] * 0.9)) + 1:end]]
+
+    train_3cat_NN(xs, ys, 0.001)
+    
+
+    @load "NNRoentgen3Way.bson" model
+    @load "NNRoentgen3Way.bson" weights
+
+    Flux.loadparams!(model, weights)
+
+    #gt = Int64.(Y_test)
+    gt = classify(y_test) 
+    pred = classify(model(x_test)) 
+    #pred = vec(Int64.(model(X_test)))
+
+
+    confusmat(3, gt , pred) # not sure about this, we have two classes, but doesnt like it
+
+    
+
+end
+
+
 
 
 # function getData()

@@ -8,23 +8,24 @@ using Distributions
 using Random
 using HDF5
 using JLD
-# using Flux
-# using Flux, Flux.Data.MNIST, Statistics
-# using Flux: onehotbatch, onecold, logitcrossentropy
-# using Base.Iterators: partition
-# using Printf, BSON
-# using Parameters: @with_kw
-# using CUDAapi
-# using Flux.Data: DataLoader
-# using Flux: crossentropy, gradient, params, logitcrossentropy, normalise, binarycrossentropy, onehot
-# using Flux.Optimise: update!, Descent
-# using MLBase
-# using Zygote
-# using BSON: @save
-# using BSON: @load
+using IterTools
+using Flux
+using Flux.Data.MNIST
+using Statistics
+using Flux: onehotbatch, onecold, logitcrossentropy
+using Base.Iterators: partition
+using Printf, BSON
+using Parameters: @with_kw
+using CUDAapi
+using Flux.Data: DataLoader
+using Flux: crossentropy, gradient, params, normalise, binarycrossentropy, onehot
+using Flux.Optimise: update!, Descent
+using MLBase
+using Zygote
+using BSON: @save
+using BSON: @load
 
-
-include("gettingData.jl")
+#include("models.jl")
 #include(model3way.jl)
 
 
@@ -37,7 +38,10 @@ export extractFileList,
         extractClassMember,
         prepareImages,
         getData, 
-        data_path
+        data_path,
+        processX,
+        train_3Cat_NN,
+        model_3Cat
 
 
 
@@ -45,6 +49,8 @@ export extractFileList,
 # @load "NNRoentgen3Way.bson" weights
 
 # Flux.loadparams!(model, weights)
+
+include("gettingData.jl")
 
 
 end
